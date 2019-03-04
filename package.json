@@ -1,7 +1,7 @@
 {
   "name": "dynamic-fields-iview",
   "description": "A Vue.js project",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "fanyoufu <94031570@qq.com>",
   "main": "/dist/index.js",
   "license": "MIT",
