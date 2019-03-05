@@ -1,7 +1,8 @@
 <template>
-    <Poptip style="position:absolute;top:2em;right:2em;" placement="bottom-end" trigger="click" title="自定义字段" >
-        <!--  <Button>Hover</Button> -->
-        <span><Icon size="40" type="md-color-palette"  title="自定义字段"/></span>
+    <Poptip placement="bottom-end" trigger="click" title="自定义字段" >
+        <Button type="primary" size="small">自定义字段</Button>
+
+        <!-- <span><Icon size="24" type="md-color-palette"  title="自定义字段"/></span> -->
         <div slot="content">
             <Tree
             show-checkbox
@@ -9,7 +10,7 @@
             :data="treeData"
             />
         </div>
-      </Poptip>
+    </Poptip>
 </template>
 <script>
 export default {

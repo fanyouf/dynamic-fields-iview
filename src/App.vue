@@ -1,10 +1,15 @@
 <template>
   <div style="padding:40px;">
-    <BaseComponent></BaseComponent>
+    <!-- <BaseComponent></BaseComponent> -->
+    <h1>DynamicFieldsIview 组件</h1>
+    <DynamicFieldsIview 
+      :pFieldsList="fields" 
+      pStorageId="store1"
+      @query="hQquery"
+      @dept1Change="hDept1Change"
+    ></DynamicFieldsIview>
     <hr>
-    <DynamicFieldsIview :pFieldsList="fields"></DynamicFieldsIview>
-    <hr>
-    <JsxComponent></JsxComponent>
+    <!-- <JsxComponent></JsxComponent> -->
   </div>
 </template>
 <script>
@@ -23,9 +28,9 @@ export default {
             { label: "一级部门1", value: "code11" },
             { label: "一级部门2", value: "code12" },
           ],
-          
           initValue: "code11",
-          type: "select"
+          type: "select",
+          initChecked:true,
         },
         {
           label: "二级部门",
@@ -35,19 +40,18 @@ export default {
             { label: "二级部门2", value: "code22" },
             { label: "二级部门3", value: "code23" }
           ],
-          // filterable:true,
-          // multiple :true,
-          type: "select"
+          type: "select",
+          initChecked:true,
         },
         {
           label: "三级部门",
-          name: "dept2",
+          name: "dept3",
           data: [
             { label: "三级部门1", value: "code31" },
             { label: "三级部门2", value: "code32" }
           ],
-          // clearable :true,
-          type: "select"
+          type: "select",
+          initChecked:true,
         },
         {
           label: "关键字",
@@ -61,13 +65,13 @@ export default {
           name: "date",
           type: "date",
           unit:"D",
-          initValue: "2019-03-01"
+          initValue: "2019-03-01",
         },
         {
           label: "是否",
           name: "deadline",
           type: "checkbox",
-          initValue: true
+          initValue: true,
         },
         {
           label: "日期范围",
@@ -84,6 +88,18 @@ export default {
     DynamicFieldsIview,
     BaseComponent,
     JsxComponent
+  },
+  methods:{
+    hQquery({cond,_el}){
+      console.info("query cond",cond);
+
+      setTimeout(()=>{
+        _el.isQuery = false
+      },2000)
+    },
+    hDept1Change(val){
+      console.info("hDept1Change",val)
+    }
   }
 };
 </script>

@@ -3,13 +3,28 @@
 <script>
 import { Button, Select, Option, Input, Checkbox,DatePicker,Poptip,Tree  } from "iview";
 import TreeNode from "./treenode"
+import Arrow from "./arrow"
+import store from "../lib/store"
 export default {
   props: {
+    pStorageId:{type:String,default:""},
     pFieldsList: {
       type: Array,
       required:true,
       default: () => {
         return [];
+      },
+      validator:(arr)=>{
+        try{
+          if(Array.from(new Set(arr.map(item=>item.name))).length !== arr.length){
+            console.error("name 必须唯一");
+            return false
+          }
+        }
+        catch(e){
+          return false;
+        }
+        return true
       }
     }
   },
@@ -17,15 +32,20 @@ export default {
     return {
       value: {},
       nodeList:[],
-      cCisiableFieldKeys:[] // 可见的字段
+      isQuery:false,
+
     };
   },
   components:{
-    TreeNode
+    TreeNode,
+    Arrow
   },
   computed:{
     cVisiableFieldKeys(){
       return this.nodeList.filter(item=>item.checked).map(item=>item.name)
+    },
+    cHasMoreToShow(){
+      return this.nodeList.length > this.cVisiableFieldKeys.length
     }
   },
   mounted() {
@@ -37,18 +57,99 @@ export default {
       return {
         name:item.name,
         title:item.label,
-        checked: !(false ===item.checked)
+        checked: !!item.initChecked,
+        initChecked:!!item.initChecked
       }
     })
+
+    
 
     this.visiableFieldKeys = this.nodeList.map(item=>item.key);
 
     this.fieldsFilter = this.buildFieldsFilter()
-
+    
+    this.initStatusWithStorage()
   },
   methods: {
+    hQuery(){
+      alert("query....");
+      this.$emit("query",{cond:this.value,_el:this});
+      this.isQuery = true;
+      console.info(this.value)
+      this.saveFieldStatuToLocal();
+    },
+    initStatusWithStorage(){
+      if(!!this.pStorageId){
+        let rs =  store.get(this.pStorageId);
+        if(rs){
+          this.nodeList.forEach(item=>{
+            let storeItem = rs.find(it=>it.name === item.name);
+            storeItem && (item.checked = storeItem.checked)
+          })
+        }
+      }
+    },
+    saveFieldStatuToLocal(){
+      if(!!this.pStorageId){
+      let rs = this.nodeList.map(item=>{return {
+        name:item.name,
+        title:item.title,
+        checked: item.checked,
+        initChecked:item.initChecked
+      }})
+
+      store.set(this.pStorageId, rs);
+    }
+    },
     handlerChange(e) {
       console.info(e);
+    },
+
+    buildBtns(){
+      let that = this;
+      let btnList = []
+    
+      let btnOk = this.$createElement(
+        Button,{
+          on:{
+            click:that.hQuery
+          },
+          props:{
+            type: "primary",
+            size: "small",
+            loading: that.isQuery
+          }
+        },
+        "查询")
+      
+      let btnReset = <Button type="primary" size="small">重置</Button>
+
+
+      btnList.push(btnOk);
+      btnList.push(btnReset);
+      btnList.push(this.fieldsFilter);
+      return btnList;
+
+    },
+
+    buildArrow(){
+      let that = this;
+      let arrow = this.$createElement(Arrow,{
+        props:{
+          pHasMore: that.cHasMoreToShow
+        },
+        on:{
+          showAllChange:(flag)=>{
+            
+            that.nodeList.forEach(item=>{
+              item.checked = flag ? true : !!item.initChecked
+            })
+            
+          }
+        }
+      })
+
+      return arrow;
     },
 
     buildFieldsFilter(){
@@ -59,13 +160,9 @@ export default {
         },
         on:{
           fieldListVisableChange:(visiableList)=>{
-            // that.$forceUpdate();
             that.nodeList.forEach(item=>{
               item.checked = visiableList.includes(item.name)
             })
-            // that.visiableFieldKeys = visiableList
-            // console.info(visiableList);
-            // that.hFieldListVisableChange(visiableList)
           }
         }
       })
@@ -155,7 +252,7 @@ export default {
         let that = this;
         obj.onChange = e => {
             that.value[obj.name] = e;
-            console.info(that.value);
+            that.$emit(obj.name + "Change", that.value);
         };
         let label = <label>{obj.label}</label>;
         let val = this.value[obj.name];
@@ -195,7 +292,6 @@ export default {
         let that = this;
         obj.onChange = e => {
             that.value[obj.name] = e;
-            console.info(that.value);
             that.$emit(obj.name + "Change", that.value);
         };
         let label = <label>{obj.label}</label>;
@@ -219,17 +315,7 @@ export default {
     console.info("render...............")
     let that = this;
     let result = [];
-    let btnList = []
-    let btnOk = <Button type="primary" size="small">查询</Button>
-    let btnReset = <Button type="primary" size="small">重置 </Button>
 
-  
-
-    btnList.push(btnOk);
-    btnList.push(btnReset);
-    btnList.push(this.fieldsFilter);
-
-    let btns = <div class="queryAreaItem">{btnList}</div>
     this.pFieldsList.filter(item=>{
       return  that.cVisiableFieldKeys.includes(item.name)
     }).forEach(item => {
@@ -254,9 +340,15 @@ export default {
       }
     });
 
-    result.push(btns)
+    this.btnList = this.buildBtns()
+    
+    this.arrow = this.buildArrow()
 
-    return <div class="queryArea">{result}</div>;
+
+
+    // result.push(btns)
+
+    return <div class="queryArea">{this.arrow}<div class="queryAreaList">{result}</div><div class="queryAreabtns">{this.btnList}</div></div>;
   },
   watch: {
     value: {
@@ -272,11 +364,13 @@ export default {
 </script>
 <style lang="sass">
 .queryArea
+  padding: 2em
+  outline: 1px solid #ccc
+  position: relative
+  .queryAreaList
     display: flex
-    padding: 2em
     position: relative
     flex-wrap: wrap
-    outline: 1px solid #ccc
     .queryAreaItem
         padding: 5px
         display: flex
@@ -285,5 +379,9 @@ export default {
         label
           flex: 0 0 70px
         .select
-            flex: 1 1 auto
+          flex: 1 1 auto
+  .queryAreabtns
+    .ivu-btn
+      margin-right: 1em
+
 </style>
